@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: doorbelld
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: doorbelld-config
+  namespace: doorbelld
+type: Opaque
+data:
+  doorbelld.yaml:
+    ""
+    # unifi:
+    #   username: your_username
+    #   password: your_password
+    #   endpoint: https://your_udm_endpoint
+    # hue:
+    #   username: see docs at https://developers.meethue.com/develop/get-started-2/
+    #   endpoint: http://your_hue_bridge
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doorbelld
+  namespace: doorbelld
+spec:
+  selector:
+    matchLabels:
+      app: doorbelld
+  template:
+    metadata:
+      labels:
+        app: doorbelld
+    spec:
+      containers:
+        - name: doorbelld
+          image: joekralicky/doorbelld:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          volumeMounts:
+            - name: config
+              mountPath: /doorbelld.yaml
+              subPath: doorbelld.yaml
+      volumes:
+        - name: config
+          secret:
+            secretName: doorbelld-config
+            items:
+              - key: doorbelld.yaml
+                path: doorbelld.yaml
