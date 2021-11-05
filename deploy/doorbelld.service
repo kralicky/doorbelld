@@ -1,0 +1,12 @@
+[Unit]
+Description=Doorbelld
+After=network.target
+
+[Install]
+WantedBy=default.target
+
+[Service]
+Type=simple
+StandardOutput=journal
+ExecStart=/usr/local/bin/doorbelld
+Restart=on-failure

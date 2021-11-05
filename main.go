@@ -5,17 +5,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
+	"github.com/gen2brain/beeep"
 	"github.com/kralicky/doorbelld/pkg/hue"
 	"github.com/kralicky/doorbelld/pkg/unifi"
 )
 
 func main() {
-	viper.SetConfigFile("./doorbelld.yaml")
+	viper.SetConfigName("doorbelld")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	if home, err := os.UserHomeDir(); err == nil {
+		viper.AddConfigPath(filepath.Join(home, ".config"))
+	}
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Error(err)
@@ -62,6 +70,19 @@ func main() {
 				}
 				if event.Type == "ring" {
 					log.Info("** DOORBELL IS RINGING **")
+					go func() {
+						if err := beeep.Notify("Doorbell is ringing", "", ""); err != nil {
+							log.Error(err)
+						}
+					}()
+					go func() {
+						if err := beeep.Beep(783.99, 450); err != nil {
+							log.Error(err)
+						}
+						if err := beeep.Beep(659.25, 550); err != nil {
+							log.Error(err)
+						}
+					}()
 					for i := 0; i < 3; i++ {
 						if err := hue.AlertAllLights(hueCfg); err != nil {
 							log.Error(err)
